@@ -78,10 +78,26 @@ static void format_message(char *msg, int new)
   if (!(toys.optflags&FLAG_t)) {
     color(32);
     if (toys.optflags&FLAG_T) {
-      time_t t = TT.tea+time_s;
-      char *ts = ctime(&t);
+      struct sysinfo info;
+      sysinfo(&info);
+      TT.tea = time(0)-info.uptime;
 
-      printf("[%.*s] ", (int)(strlen(ts)-1), ts);
+      time_t t = TT.tea+time_s;
+      //char *ts = ctime(&t);
+
+      char ts[32]={0};
+      struct tm tm;
+      localtime_r(&t, &tm);
+      strftime(ts, sizeof(ts)-1, "%m-%d %H:%M:%S ", &tm);
+
+      static int count=-1;
+      count++;
+      if(0xfffff==count){
+        count=0;
+      }
+      printf("%05X <%d> [%5lld.%06lld]", count,facpri,time_s, time_us);
+
+      printf("[%.*s.%03llu] ", (int)(strlen(ts)-1), ts,time_us/1000);
     } else printf("[%5lld.%06lld] ", time_s, time_us);
   }
 
